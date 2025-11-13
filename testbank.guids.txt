@@ -1,0 +1,7 @@
+{8f749020-f268-4d36-9bbb-529d590a913b} bank:/Master
+{1769b0f4-8313-0174-1df2-d863a8f997a3} bank:/Master.strings
+{09385022-09d7-4f1e-88ef-db3d44d34542} bank:/testbank
+{d5b40bff-11b9-45d4-9872-7882f8dd1282} bus:/
+{505382b0-1d90-420a-b23b-f049c9cd4475} bus:/Reverb
+{a38193a5-8b9d-4721-8cf0-a18cab1549c6} event:/sfx/fakeheart_event
+{027e962d-8810-408b-aa57-01ffa50cbbe5} vca:/sfx

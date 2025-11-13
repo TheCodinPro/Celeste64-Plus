@@ -9,6 +9,57 @@ public class IntroCar : Solid
 	private Vec3 spawnPoint;
 	private bool hasRider = false;
 
+	public IntroCar()
+	{
+		wheels = new(Assets.Models["car_wheels"]);
+		body = new(Assets.Models["car_top"]);
+
+		// create solids out of body mesh ....?
+		{
+			var collider = new SkinnedModel(Assets.Models["car_collider"]);
+			var vertices = new List<Vec3>();
+			var faces = new List<Face>();
+			var meshVertices = collider.Template.Vertices;
+			var meshIndices = collider.Template.Indices;
+			var mat = SkinnedModel.BaseTranslation * collider.Transform * Matrix.CreateScale(scale);
+
+			for (int i = 0; i < collider.Instance.Count; i++)
+			{
+				var drawable = collider.Instance[i];
+				if (drawable.Transform is not SharpGLTF.Transforms.RigidTransform statXform)
+					continue;
+
+				var meshPart = collider.Template.Parts[drawable.Template.LogicalMeshIndex];
+				var meshMatrix = statXform.WorldMatrix * mat;
+
+				foreach (var primitive in meshPart)
+				{
+					int v = vertices.Count;
+					for (int n = 0; n < primitive.Count; n++)
+						vertices.Add(Vec3.Transform(meshVertices[meshIndices[primitive.Index + n + 0]].Pos, meshMatrix));
+					for (int n = 0; n < primitive.Count; n += 3)
+					{
+						faces.Add(new Face()
+						{
+							Plane = Plane.CreateFromVertices(vertices[v + n + 0], vertices[v + n + 1], vertices[v + n + 2]),
+							VertexStart = v + n,
+							VertexCount = 3
+						});
+					}
+				}
+			}
+
+			LocalVertices = [.. vertices];
+			LocalFaces = [.. faces];
+			LocalBounds = new BoundingBox(
+				vertices.Aggregate(Vec3.Min),
+				vertices.Aggregate(Vec3.Max)
+			);
+		}
+
+		Transparent = true;
+	}
+
 	public IntroCar(float scale)
 	{
 		this.scale = scale;

@@ -73,7 +73,7 @@ public class Refill : Actor, IHaveSprites, IPickup, IHaveModels, ICastPointShado
 
 	public void Pickup(Player player)
 	{
-		int count = IsDouble ? 2 : 1;
+		int count = IsDouble ? 2 : player.dashesMax;
 		if (tCooldown <= 0 && player.Dashes < count)
 		{
 			UpdateOffScreen = true;
@@ -81,6 +81,7 @@ public class Refill : Actor, IHaveSprites, IPickup, IHaveModels, ICastPointShado
 			tCooldown = 4;
 			tCollect = 1.0f;
 			World.HitStun = 0.05f;
+			//Audio.Play(Sfx.sfx_test, Position);
 			Audio.Play(IsDouble ? Sfx.sfx_dashcrystal_double : Sfx.sfx_dashcrystal, Position);
 		}
 	}

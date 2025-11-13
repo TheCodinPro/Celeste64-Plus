@@ -249,7 +249,13 @@ public class Game : Module
 				if (scene is World world)
 				{
 					foreach (var listener in world.All<IListenToAudioCallback>())
+					{
 						(listener as IListenToAudioCallback)?.AudioCallbackEvent(audioBeatCounter);
+					}
+					//foreach (var listener in world.All<IListenToBeat>())
+					//{
+					//	(listener as IListenToBeat)?.BeatEvent(audioBeatCounter, CassetteBlock.CassetteBlockType.None);
+					//}
 				}
 			}
 		}

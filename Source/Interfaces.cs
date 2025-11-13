@@ -61,6 +61,12 @@ public interface IListenToAudioCallback
 	public void AudioCallbackEvent(int beatIndex);
 }
 
+public interface IListenToBeat
+{
+
+	public void BeatEvent(int beatIndex, CassetteBlock.CassetteBlockType type, CassetteBlockManager manager);
+}
+
 /// <summary>
 /// Actor is recycled instead of destroyed. Call World.Request<T> to get a new one.
 /// </summary>

@@ -1,3 +1,9 @@
+@BaseClass = Actor
+[
+    angles(vector) : "Angles"
+    scale(vector) : "Scale"
+]
+
 @SolidClass = worldspawn : "World entity"
 [
 	skybox(string) : "SkyBox"
@@ -17,38 +23,38 @@
 
 ]
 
-@PointClass size(-16 -16 0, 16 16 16) model({ "path": model }) = StaticProp : "Static Prop" 
+@PointClass size(-16 -16 0, 16 16 16) base(Actor) model({ "path": model }) = StaticProp : "Static Prop" 
 [
     model(String) : "Model file path" : : "Set this to a 3D model file."
 	radius(integer) : "Radius" : 6 : "Pushout Radius"
 	height(integer) : "Height" : 12 : "Pushout Height"
 ]
 
-@PointClass size(-16 -16 0, 16 16 32) = PlayerSpawn : "Player start position" 
+@PointClass size(-16 -16 0, 16 16 32) model({ "path": "Models/flag_off.glb" }) base(Actor) = PlayerSpawn : "Player start position" 
 [
     name(string) : "Name" : "Start"
 ]
 
-@PointClass model({ "path": "Models/strawberry.glb", "scale": 12 }) = Strawberry : "Strawb Get!" 
+@PointClass model({ "path": "Models/strawberry.glb", "scale": 12 }) base(Actor) = Strawberry : "Strawb Get!" 
 [
     locked(integer) : "Locked" : 0
     targetname(string) : "Target Name"
     bubbleto(string) : "Bubble To" : : "If assigned, Strawberry will bubble the player"
 ]
 
-@PointClass model({ "path": "Models/granny.glb", "scale": 12 }) = Granny : "She cool" 
+@PointClass model({ "path": "Models/granny.glb", "scale": 12 }) base(Actor) = Granny : "She cool" 
 [
 ]
 
-@PointClass model({ "path": "Models/theo.glb", "scale": 12 }) = Theo : "He's rad" 
+@PointClass model({ "path": "Models/theo.glb", "scale": 12 }) base(Actor) = Theo : "He's rad" 
 [
 ]
 
-@PointClass model({ "path": "Models/badeline.glb", "scale": 12 }) = Badeline : "She's bad" 
+@PointClass model({ "path": "Models/badeline.glb", "scale": 12 }) base(Actor) = Badeline : "She's bad" 
 [
 ]
 
-@PointClass model({ "path": "Models/sign.glb", "scale": 12 }) = SignPost : "Says some stuff" 
+@PointClass model({ "path": "Models/sign.glb", "scale": 12 }) base(Actor) = SignPost : "Says some stuff" 
 [
     dialog(string) : "Dialog Entry"
 	angle(integer) : "Sign Rotation"
@@ -59,22 +65,22 @@
     targetname(string) : "Target Name"
 ]
 
-@PointClass size(-16 -16 -16, 16 16 16) = Refill : "Refill's Maddy's dashes"
+@PointClass size(-16 -16 -16, 16 16 16) model({{ double == "1" -> { "path": "Models/refill_gem_double.glb", "scale": 12 }, { "path": "Models/refill_gem.glb", "scale": 12 } }}) base(Actor) = Refill : "Refill's Maddy's dashes"
 [
     double(integer) : "Double" : 0
 ]
 
-@PointClass size(-16 -16 -16, 16 16 16) = Feather : "Lets Maddy fly for a short time"
+@PointClass size(-16 -16 -16, 16 16 16) model({ "path": "Models/feather.glb", "scale": 12 }) base(Actor) = Feather : "Lets Maddy fly for a short time"
 [
 
 ]
 
-@PointClass size(-16 -16 -16, 16 16 16) = Cassette : "Warps to a B-Side challenge room"
+@PointClass size(-16 -16 -16, 16 16 16) model({ "path": "Models/tape_1.glb", "scale": 12 }) base(Actor) = Cassette : "Warps to a B-Side challenge room"
 [
     map(string) : "Map"
 ]
 
-@PointClass size(-16 -16 -16, 16 16 16) = Coin : "Collect em all to open a gate block"
+@PointClass size(-16 -16 -16, 16 16 16) model({ "path": "Models/coin.glb", "scale": 12 }) base(Actor) = Coin : "Collect em all to open a gate block"
 [
 
 ]
@@ -84,7 +90,7 @@
 
 ]
 
-@PointClass model({ "path": "Models/spring_board.glb", "scale": 36 }) = Spring : "Bounces you..." 
+@PointClass model({ "path": "Models/spring_board.glb", "scale": 36 }) base(Actor) = Spring : "Bounces you..." 
 [
 ]
 
@@ -135,6 +141,22 @@
 @SolidClass = CassetteBlock : "Toggles to the Music"
 [
 	startOn(integer) : "Start On" : : "If this block should start toggled on"
+    type(string) : "Type" : : "What block type is it (Blue, Red, Yellow, Green)"
+    group(string) : "Group" : : "The group ID used for these beat blocks"
+]
+
+@SolidClass = CassetteTrafficBlock : "Toggles to the Music and moves to the node when the player is riding it"
+[
+	startOn(integer) : "Start On" : : "If this block should start toggled on"
+    type(string) : "Type" : : "What block type is it (Blue, Red, Yellow, Green)"
+    target(string) : "Target Node"
+    group(string) : "Group" : : "The group ID used for these beat blocks"
+]
+
+@PointClass = CassetteBlockManager : "Manages the beat for Cassette Blocks"
+[
+    beatOffset(integer) : "Beat Offset"
+    group(string) : "Group" : : "The group ID used for these beat blocks"
 ]
 
 @SolidClass = EndingArea : "Where the game ends"
@@ -147,7 +169,25 @@
    target(string) : "Target Node"
 ]
 
-@PointClass = IntroCar : "Intro Car ............. :)"
+@PointClass model({ "path": "Models/car_merged.glb", "scale": 28 }) base(Actor) = IntroCar : "Intro Car ............. :)"
+[
+
+]
+
+@PointClass model({ "path": "Models/winged_berry.glb", "scale": 12 }) base(Actor) = WingedBerry : "Flies away when madeline dashes"
+[
+    locked(integer) : "Locked" : 0
+    targetname(string) : "Target Name"
+    bubbleto(string) : "Bubble To" : : "If assigned, Strawberry will bubble the player"
+    detectionAreaName(string) : : : "Only detect dashes within this WingedBerryArea (when specified)"
+]
+
+@SolidClass = WingedBerryArea : "Restrict dash detection to an area"
+[
+    detectionAreaName(string) : : : "The name of this area, to be referenced from a WingedBerry"
+]
+
+@SolidClass = Cloud : "go bouncy"
 [
 
 ]

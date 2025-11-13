@@ -5,8 +5,16 @@ public class Actor
 {
 	private World? world = null;
 	private Vec3 position;
-	private Vec2 facing = -Vec2.UnitY;
+	private Vec3 scale = new Vector3(1, 1, 1);
+	private Vec2 rotationX = -Vec2.UnitY;
+	private Vec2 rotationY = -Vec2.UnitY;
+	private Vec2 rotationZ = -Vec2.UnitY;
 	private Vec3 forward;
+	private Vec3 backward;
+	private Vec3 right;
+	private Vec3 left;
+	private Vec3 up;
+	private Vec3 down;
 	private Matrix matrix;
 	private BoundingBox localBounds;
 	private BoundingBox worldBounds;
@@ -64,14 +72,53 @@ public class Actor
 		}
 	}
 
-	public Vec2 Facing
+	public Vec3 Scale
 	{
-		get => facing;
+		get => scale;
 		set
 		{
-			if (facing != value)
+			if (scale != value)
 			{
-				facing = value;
+				scale = value;
+				dirty = true;
+			}
+		}
+	}
+
+	public Vec2 RotationZ
+	{
+		get => rotationZ;
+		set
+		{
+			if (rotationZ != value)
+			{
+				rotationZ = value;
+				dirty = true;
+			}
+		}
+	}
+
+	public Vec2 RotationX
+	{
+		get => rotationX;
+		set
+		{
+			if (rotationX != value)
+			{
+				rotationX = value;
+				dirty = true;
+			}
+		}
+	}
+
+	public Vec2 RotationY
+	{
+		get => rotationY;
+		set
+		{
+			if (rotationY != value)
+			{
+				rotationY = value;
 				dirty = true;
 			}
 		}
@@ -83,6 +130,50 @@ public class Actor
 		{
 			ValidateTransformations();
 			return forward;
+		}
+	}
+	public Vec3 Backward
+	{
+		get
+		{
+			ValidateTransformations();
+			return backward;
+		}
+	}
+
+	public Vec3 Right
+	{
+		get
+		{
+			ValidateTransformations();
+			return right;
+		}
+	}
+
+	public Vec3 Left
+	{
+		get
+		{
+			ValidateTransformations();
+			return left;
+		}
+	}
+
+	public Vec3 Up
+	{
+		get
+		{
+			ValidateTransformations();
+			return up;
+		}
+	}
+
+	public Vec3 Down
+	{
+		get
+		{
+			ValidateTransformations();
+			return down;
 		}
 	}
 
@@ -118,10 +209,18 @@ public class Actor
 		dirty = false;
 
 		matrix =
-			Matrix.CreateRotationZ(facing.Angle() + MathF.PI / 2) *
+			Matrix.CreateScale(scale) *
+			Matrix.CreateRotationX(rotationX.Angle() + MathF.PI / 2) *
+			Matrix.CreateRotationY(rotationY.Angle() + MathF.PI / 2) *
+			Matrix.CreateRotationZ(rotationZ.Angle() + MathF.PI / 2) *
 			Matrix.CreateTranslation(position);
 		worldBounds = BoundingBox.Transform(localBounds, matrix);
 		forward = Vec3.TransformNormal(-Vec3.UnitY, matrix);
+		backward = Vec3.TransformNormal(Vec3.UnitY, matrix);
+		right = Vec3.TransformNormal(-Vec3.UnitX, matrix);
+		left = Vec3.TransformNormal(Vec3.UnitX, matrix);
+		up = Vec3.TransformNormal(Vec3.UnitZ, matrix);
+		down = Vec3.TransformNormal(-Vec3.UnitZ, matrix);
 
 		Transformed();
 	}

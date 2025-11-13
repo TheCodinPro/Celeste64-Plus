@@ -44,7 +44,22 @@ public class Map
 			map.LoadStrawberryCounter++;
 			return new Strawberry(id, isLocked, lockedCondition, playUnlockSound, bubbleTo);
 		}),
+		["WingedBerry"] = new((map, entity) =>
+		{
+			var id = $"{map.LoadWorld!.Entry.Map}/{map.LoadStrawberryCounter}";
+			var lockedCondition = entity.GetStringProperty("targetname", string.Empty);
+			var isLocked = entity.GetIntProperty("locked", 0) > 0;
+			var playUnlockSound = entity.GetIntProperty("noUnlockSound", 0) == 0;
+			Vec3? bubbleTo = null;
+			if (map.FindTargetNode(entity.GetStringProperty("bubbleto", string.Empty), out var point))
+				bubbleTo = point;
+			var detectionAreaName = entity.GetStringProperty("detectionAreaName", string.Empty);
+			map.LoadStrawberryCounter++;
+			return new WingedBerry(id, isLocked, lockedCondition, playUnlockSound, bubbleTo, detectionAreaName);
+		}),
+		["WingedBerryArea"] = new((map, entity) => new WingedBerryArea(entity.GetStringProperty("detectionAreaName", string.Empty))) { UseSolidsAsBounds = true },
 		["Refill"] = new((map, entity) => new Refill(entity.GetIntProperty("double", 0) > 0)),
+		["Cloud"] = new((map, entity) => new Cloud()) { IsSolidGeometry = true },
 		["Cassette"] = new((map, entity) => new Cassette(entity.GetStringProperty("map", string.Empty))),
 		["Coin"] = new((map, entity) => new Coin()),
 		["Feather"] = new((map, entity) => new Feather()),
@@ -87,12 +102,15 @@ public class Map
 				entity.GetIntProperty("transparent", 0) != 0,
 				entity.GetIntProperty("secret", 0) != 0);
 		}) { IsSolidGeometry = true },
-		["CassetteBlock"] = new((map, entity) => new CassetteBlock(entity.GetIntProperty("startOn", 1) != 0)) { IsSolidGeometry = true },
+		["CassetteBlock"] = new((map, entity) => new CassetteBlock(entity.GetIntProperty("startOn", 1) != 0, entity.GetStringProperty("type", "None"), entity.GetStringProperty("group", "None"))) { IsSolidGeometry = true },
+		["CassetteTrafficBlock"] = new((map, entity) => new CassetteTrafficBlock(entity.GetIntProperty("startOn", 1) != 0, entity.GetStringProperty("type", "None"), entity.GetStringProperty("group", "None"), map.FindTargetNodeFromParam(entity, "target"))) { IsSolidGeometry = true },
+		["CassetteBlockManager"] = new((map, entity) => new CassetteBlockManager(entity.GetStringProperty("group", "None"), entity.GetIntProperty("beatOffset", 2))),
 		["DoubleDashPuzzleBlock"] = new((map, entity) => new DoubleDashPuzzleBlock()) { IsSolidGeometry = true },
 		["EndingArea"] = new((map, entity) => new EndingArea()) { UseSolidsAsBounds = true },
 		["Fog"] = new((map, entity) => new FogRing(entity)),
 		["FixedCamera"] = new((map, entity) => new FixedCamera(map.FindTargetNodeFromParam(entity, "target"))) { UseSolidsAsBounds = true },
-		["IntroCar"] = new((map, entity) => new IntroCar(entity.GetFloatProperty("scale", 6)))
+		//["IntroCar"] = new((map, entity) => new IntroCar(entity.GetFloatProperty("scale", 6)))
+		["IntroCar"] = new((map, entity) => new IntroCar())
 	};
 
 	private readonly Dictionary<string, DefaultMaterial> currentMaterials = [];
@@ -290,8 +308,37 @@ public class Map
 				groupNames.TryGetValue(entity.GetIntProperty("_tb_group", -1), out var groupName))
 				it.GroupName = groupName;
 
-			if (entity.Properties.ContainsKey("angle"))
-				it.Facing = Calc.AngleToVector(entity.GetIntProperty("angle", 0) * Calc.DegToRad - MathF.PI / 2);
+			if (!entity.Properties.ContainsKey("angles"))
+			{
+				if (entity.Properties.ContainsKey("angle"))
+					it.RotationZ = Calc.AngleToVector(entity.GetIntProperty("angle", 0) * Calc.DegToRad - MathF.PI / 2);
+
+				if (entity.Properties.ContainsKey("angleX"))
+					it.RotationX = Calc.AngleToVector(entity.GetIntProperty("angleX", 0) * Calc.DegToRad - MathF.PI / 2);
+
+				if (entity.Properties.ContainsKey("angleY"))
+					it.RotationY = Calc.AngleToVector(entity.GetIntProperty("angleY", 0) * Calc.DegToRad - MathF.PI / 2);
+			}
+			else
+			{
+				var Rotation = entity.GetVectorProperty("angles", Vec3.Zero);
+
+				//it.RotationX = Calc.AngleToVector(Rotation.X * (MathF.PI / 180));
+				//it.RotationY = Calc.AngleToVector(Rotation.Y * (MathF.PI / 180));
+				//it.RotationZ = Calc.AngleToVector(Rotation.Z * (MathF.PI / 180));
+
+				it.RotationX = Calc.AngleToVector(Rotation.Z * Calc.DegToRad - MathF.PI / 2);
+				it.RotationY = Calc.AngleToVector(Rotation.X * Calc.DegToRad - MathF.PI / 2);
+				it.RotationZ = Calc.AngleToVector(Rotation.Y * Calc.DegToRad - MathF.PI / 2);
+			}
+
+			//if (entity.Properties.ContainsKey("scale") && it is not IntroCar)
+			if (entity.Properties.ContainsKey("scale"))
+			{
+				var Scale = entity.GetVectorProperty("scale", Vec3.One);
+
+				it.Scale = new Vector3(Scale.X, Scale.Y, Scale.Z);
+			}
 
 			if (factory?.UseSolidsAsBounds ?? false)
 			{

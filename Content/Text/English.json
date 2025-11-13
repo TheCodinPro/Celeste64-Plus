@@ -2,8 +2,7 @@
 	"ID": "english",
 	"Label": "English",
 	"Font": "Renogare",
-	"Strings":
-	{
+	"Strings": {
 		"Confirm": "Confirm",
 		"Cancel": "Cancel",
 		"Back": "Back",
@@ -23,7 +22,13 @@
 		"OptionsTimer": "Timer",
 		"OptionsBGM": "BGM",
 		"OptionsSFX": "SFX",
-		"OptionsInvertCamera": "Inverted Camera"
+		"OptionsInvertCamera": "Inverted Camera",
+		"PauseAssistOptions": "Assist Options",
+		"AssistOptionsTitle": "Assist Options",
+		"AssistOptionsGameSpeed": "Game Speed",
+		"AssistOptionsAirDashes": "Air Dashes",
+		"AssistOptionsDashAssist": "Dash Assist",
+		"AssistOptionsInvincibility": "Invincibility"
 	},
 	"Dialog":
 	{

@@ -1,4 +1,6 @@
 
+using System.Runtime.InteropServices;
+
 namespace Celeste64;
 
 /// <summary>
@@ -66,9 +68,12 @@ public class Player : Actor, IHaveModels, IHaveSprites, IRidePlatforms, ICastPoi
 	private const float FeatherExitXYMult = .5f;
 	private const float FeatherExitZSpeed = 60;
 
+	
+
 	static private readonly Color CNormal = 0xdb2c00;
 	static private readonly Color CNoDash = 0x6ec0ff;
 	static private readonly Color CTwoDashes = 0xfa91ff;
+	static private readonly Color CThreeDashes = 0x26ff00;
 	static private readonly Color CRefillFlash = Color.White;
 	static private readonly Color CFeather = 0xf2d450;
 
@@ -190,6 +195,7 @@ public class Player : Actor, IHaveModels, IHaveSprites, IRidePlatforms, ICastPoi
 
 	public Player()
 	{
+		//Scale = new Vector3(.5f, .5f, .5f);
 		PointShadowAlpha = 1.0f;
 		LocalBounds = new BoundingBox(new Vec3(0, 0, 10), 10);
 		UpdateOffScreen = true;
@@ -262,6 +268,16 @@ public class Player : Actor, IHaveModels, IHaveSprites, IRidePlatforms, ICastPoi
 
 	public override void Update()
 	{
+		if (Save.Instance.AirDashes != dashesMax)
+		{
+			dashesMax = Save.Instance.AirDashes;
+			if (dashes > dashesMax)
+			{
+				dashes = dashesMax;
+				tDashResetFlash = .05f;
+			}
+		}
+
 		// only update camera if not dead
 		if (stateMachine.State != States.Respawn && stateMachine.State != States.Dead && 
 			stateMachine.State != States.StrawbReveal && stateMachine.State != States.Cassette)
@@ -414,7 +430,7 @@ public class Player : Actor, IHaveModels, IHaveSprites, IRidePlatforms, ICastPoi
 				tCoyote = CoyoteTime;
 				coyoteZ = Position.Z;
 				if (tDashResetCooldown <= 0)
-					RefillDash();
+					RefillDash(dashesMax);
 			}
 			else
 				groundNormal = Vec3.UnitZ;
@@ -488,7 +504,7 @@ public class Player : Actor, IHaveModels, IHaveSprites, IRidePlatforms, ICastPoi
 			Calc.Approach(ref ModelScale.Y, 1, Time.Delta / .8f);
 			Calc.Approach(ref ModelScale.Z, 1, Time.Delta / .8f);
 
-			Facing = Calc.AngleToVector(Calc.AngleApproach(Facing.Angle(), targetFacing.Angle(), MathF.Tau * 2 * Time.Delta));
+			RotationZ = Calc.AngleToVector(Calc.AngleApproach(RotationZ.Angle(), targetFacing.Angle(), MathF.Tau * 2 * Time.Delta));
 
 			Model.Update();
 			Model.Transform = Matrix.CreateScale(ModelScale * 3);
@@ -502,8 +518,10 @@ public class Player : Actor, IHaveModels, IHaveSprites, IRidePlatforms, ICastPoi
 					color = CNormal;
 				else if (dashes == 0)
 					color = CNoDash;
-				else
+				else if (dashes == 2)
 					color = CTwoDashes;
+				else
+					color = CThreeDashes;
 
 				SetHairColor(color);
 			}
@@ -522,7 +540,7 @@ public class Player : Actor, IHaveModels, IHaveSprites, IRidePlatforms, ICastPoi
 			}
 
 			Hair.Flags = Model.Flags;
-			Hair.Forward = -new Vec3(Facing, 0);
+			Hair.Forward = -new Vec3(RotationZ, 0);
 			Hair.Squish = ModelScale;
 			Hair.Materials[0].Effects = 0;
 			Hair.Grounded = onGround;
@@ -722,7 +740,7 @@ public class Player : Actor, IHaveModels, IHaveSprites, IRidePlatforms, ICastPoi
 	public void CancelGroundSnap() =>
 		tGroundSnapCooldown = 0.1f;
 
-	private void Jump()
+	public void Jump()
 	{
 		Position = Position with { Z = coyoteZ };
 		holdJumpSpeed = velocity.Z = JumpSpeed;
@@ -793,7 +811,7 @@ public class Player : Actor, IHaveModels, IHaveSprites, IRidePlatforms, ICastPoi
 		tHoldJump = DashJumpHoldTime;
 		tCoyote = 0;
 		autoJump = false;
-		dashes = 1;
+		dashes = dashesMax;
 
 		if (DashJumpXYBoost != 0)
 		{
@@ -930,12 +948,27 @@ public class Player : Actor, IHaveModels, IHaveSprites, IRidePlatforms, ICastPoi
 		tHoldJump = SpringJumpHoldTime;
 		tCoyote = 0;
 		autoJump = true;
+		var springXBounceSpeed = 200;
+		var springYBounceSpeed = 200;
+		//Note: Implement setting XY Velocity to zero only if the spring up XY normal isn't zero
+		//
+		//var direction = Vec3.Normalize(velocity);
+		//if (Math.Abs(direction.X - spring.Up.X) <= 1)
+		//{
+		//	springXBounceSpeed = 160;
+		//}
+		//if (Math.Abs(direction.Y - spring.Up.Y) <= 1)
+		//{
+		//	springYBounceSpeed = 160;
+		//}
+		velocity.X += (spring.Up.X * springXBounceSpeed);
+		velocity.Y += (spring.Up.Y * springYBounceSpeed);
 
 		var velXY = velocity.XY();
 		Calc.Approach(ref velXY, Vec2.Zero, 30);
 		velocity = velocity.WithXY(velXY);
 
-		dashes = Math.Max(dashes, 1);
+		dashes = Math.Max(dashes, dashesMax);
 		CancelGroundSnap();
 	}
 
@@ -1072,7 +1105,7 @@ public class Player : Actor, IHaveModels, IHaveSprites, IRidePlatforms, ICastPoi
 				{
 					if (Vec2.Dot(input, velXY.Normalized()) <= SkidDotThreshold)
 					{
-						Facing = targetFacing = input;
+						RotationZ = targetFacing = input;
 						stateMachine.State = States.Skidding;
 						return;
 					}
@@ -1217,6 +1250,7 @@ public class Player : Actor, IHaveModels, IHaveSprites, IRidePlatforms, ICastPoi
 
 	#region Dashing State
 
+	public int dashesMax = Save.Instance.AirDashes;
 	public int Dashes => dashes;
 	private int dashes = 1;
 	private float tDash;
@@ -1242,9 +1276,20 @@ public class Player : Actor, IHaveModels, IHaveSprites, IRidePlatforms, ICastPoi
 	{
 		if (RelativeMoveInput != Vec2.Zero)
 			targetFacing = RelativeMoveInput;
-		Facing = targetFacing;
-
-		lastDashHairColor = dashes <= 0 ? CNoDash : CNormal;
+		RotationZ = targetFacing;
+		if (dashes >= 3)
+		{
+			lastDashHairColor = CThreeDashes;
+		} else if (dashes >= 2)
+		{
+			lastDashHairColor = CTwoDashes;
+		} else if (dashes == 1)
+		{
+			lastDashHairColor = CNormal;
+		} else
+		{
+			lastDashHairColor = CNoDash;
+		}
 		dashedOnGround = onGround;
 		SetDashSpeed(targetFacing);
 		autoJump = true;
@@ -1253,6 +1298,8 @@ public class Player : Actor, IHaveModels, IHaveSprites, IRidePlatforms, ICastPoi
 		tDashResetCooldown = DashResetCooldown;
 		tNoDashJump = .1f;
 		dashTrailsCreated = 0;
+
+		foreach (WingedBerry berry in World.All<WingedBerry>()) berry.OnPlayerDash(this);
 
 		World.HitStun = .02f;
 
@@ -1520,7 +1567,7 @@ public class Player : Actor, IHaveModels, IHaveSprites, IRidePlatforms, ICastPoi
 				{
 					if (Time.OnInterval(0.05f))
 					{
-						var at = Position + wallUp * 5 + new Vec3(Facing, 0) * 2;
+						var at = Position + wallUp * 5 + new Vec3(RotationZ, 0) * 2;
 						var vel = tPlatformVelocityStorage > 0 ? platformVelocity : Vec3.Zero;
 						World.Request<Dust>().Init(at, vel);
 					}
@@ -1674,7 +1721,7 @@ public class Player : Actor, IHaveModels, IHaveSprites, IRidePlatforms, ICastPoi
 
 	private void StStrawbGetUpdate()
 	{
-		Facing = targetFacing = Calc.AngleToVector(strawbGetForward.Angle() - MathF.PI / 7);
+		RotationZ = targetFacing = Calc.AngleToVector(strawbGetForward.Angle() - MathF.PI / 7);
 		cameraOverride = new CameraOverride(Position + new Vec3(strawbGetForward * 50, 40), Position + Vec3.UnitZ * 6);
 	}
 
@@ -1775,7 +1822,7 @@ public class Player : Actor, IHaveModels, IHaveSprites, IRidePlatforms, ICastPoi
 		{
 			stateMachine.State = States.FeatherStart;
 			featherZ = feather.Position.Z - 2;
-			dashes = Math.Max(dashes, 1);
+			dashes = Math.Max(dashes, dashesMax);
 			Audio.Play(Sfx.sfx_feather_get, Position);
 		}
 	}
@@ -1816,6 +1863,8 @@ public class Player : Actor, IHaveModels, IHaveSprites, IRidePlatforms, ICastPoi
 
 		if (tFeather > EndWarningTime || Time.BetweenInterval(.1f))
 			SetHairColor(CFeather);
+		else if (dashes == 3)
+			SetHairColor(CThreeDashes);
 		else if (dashes == 2)
 			SetHairColor(CTwoDashes);
 		else

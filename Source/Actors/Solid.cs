@@ -13,6 +13,8 @@ public class Solid : Actor, IHaveModels
 	/// </summary>
 	public bool Transparent = false;
 
+	public bool Climbable = true;
+
 	/// <summary>
 	/// Visual Model to Draw
 	/// </summary>

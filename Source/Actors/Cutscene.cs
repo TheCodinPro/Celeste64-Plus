@@ -141,7 +141,7 @@ public class Cutscene : Actor, IHaveUI
 		if (actor != null)
 		{
 			var facing = (target - actor.Position).XY().Normalized();
-			var current = actor.Facing;
+			var current = actor.RotationZ;
 
 			while (MathF.Abs(facing.Angle() - current.Angle()) > 0.05f)
 			{
@@ -149,7 +149,7 @@ public class Cutscene : Actor, IHaveUI
 				if (actor is Player player)
 					player.SetTargetFacing(current);
 				else
-					actor.Facing = current;
+					actor.RotationZ = current;
 				yield return Co.SingleFrame;
 			}
 		}

@@ -87,6 +87,13 @@ public class World : Scene
 			optionsMenu.Add(new Menu.Slider(Loc.Str("OptionsBGM"), 0, 10, () => Save.Instance.MusicVolume, Save.Instance.SetMusicVolume));
 			optionsMenu.Add(new Menu.Slider(Loc.Str("OptionsSFX"), 0, 10, () => Save.Instance.SfxVolume, Save.Instance.SetSfxVolume));
 
+			Menu assistOptionsMenu = new Menu();
+			assistOptionsMenu.Title = Loc.Str("AssistOptionsTitle");
+			assistOptionsMenu.Add(new Menu.Slider(Loc.Str("AssistOptionsGameSpeed"), 0, 10, () => Save.Instance.GameSpeed, Save.Instance.SetGameSpeed));
+			assistOptionsMenu.Add(new Menu.MultiSelect<Save.AirDashOptions>(Loc.Str("AssistOptionsAirDashes"), Save.Instance.SetAirDashes, () => (Save.AirDashOptions)Save.Instance.AirDashes));
+			assistOptionsMenu.Add(new Menu.Toggle(Loc.Str("AssistOptionsDashAssist"), Save.Instance.ToggleDashAssist, () => Save.Instance.DashAssist));
+			assistOptionsMenu.Add(new Menu.Toggle(Loc.Str("AssistOptionsInvincibility"), Save.Instance.ToggleInvincibility, () => Save.Instance.Invincibility));
+
 			pauseMenu.Title = Loc.Str("PauseTitle");
             pauseMenu.Add(new Menu.Option(Loc.Str("PauseResume"), () => SetPaused(false)));
 			pauseMenu.Add(new Menu.Option(Loc.Str("PauseRetry"), () =>
@@ -95,6 +102,7 @@ public class World : Scene
 				Audio.StopBus(Sfx.bus_dialog, false);
 				Get<Player>()?.Kill();
 			}));
+			pauseMenu.Add(new Menu.Submenu(Loc.Str("PauseAssistOptions"), pauseMenu, assistOptionsMenu));
 			pauseMenu.Add(new Menu.Submenu(Loc.Str("PauseOptions"), pauseMenu, optionsMenu));
 			pauseMenu.Add(new Menu.Option(Loc.Str("PauseSaveQuit"), () => Game.Instance.Goto(new Transition()
 			{

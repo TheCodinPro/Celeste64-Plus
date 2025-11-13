@@ -6,5 +6,13 @@
 		"Strawberries": 30,
 		"Preview": "Postcards/ForsakenCity",
 		"Map": "1"
+	},
+	{
+		"ID": "1_TEST_MAP",
+		"Name": "Test Map",
+		"Label": "Created for testing stuff",
+		"Strawberries": 10,
+		"Preview": "Postcards/TestMap",
+		"Map": "2"
 	}
 ]

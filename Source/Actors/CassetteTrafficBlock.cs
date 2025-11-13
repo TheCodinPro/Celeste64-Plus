@@ -1,9 +1,10 @@
-
-using System.Transactions;
+﻿
+using System;
+using System.Security.Cryptography.X509Certificates;
 
 namespace Celeste64;
 
-public class TrafficBlock(Vec3 end) : Solid, IHaveModels
+public class CassetteTrafficBlock(bool startOn, string type, string group, Vec3 end) : CassetteBlock(startOn, type, group), IListenToAudioCallback, IHaveModels
 {
 	public SkinnedModel? FrameModel;
 
@@ -17,7 +18,6 @@ public class TrafficBlock(Vec3 end) : Solid, IHaveModels
 	private readonly Routine routine = new();
 	private Sound? sfxMove;
 	private Sound? sfxRetract;
-	private bool triggered;
 
 	public override void Added()
 	{
@@ -28,6 +28,7 @@ public class TrafficBlock(Vec3 end) : Solid, IHaveModels
 		sfxRetract = World.Add(new Sound(this, Sfx.sfx_zipmover_retract_loop));
 		FrameModel = new SkinnedModel(Assets.Models["trafficblockframe"]);
 		FrameModel.Transform = Matrix.CreateScale(LocalBounds.Size.X / 1.9f, LocalBounds.Size.Y / 1.9f, LocalBounds.Size.Z / 1.9f);
+		FrameModel.MakeMaterialsUnique();
 	}
 
 	public override void Update()
@@ -35,9 +36,51 @@ public class TrafficBlock(Vec3 end) : Solid, IHaveModels
 		base.Update();
 		routine.Update();
 
+		if (!Collidable)
+		{
+			FrameModel.Flags = ModelFlags.Transparent;
+
+			foreach (var mat in FrameModel.Materials)
+				switch (BlockType)
+				{
+					case CassetteBlock.CassetteBlockType.Blue:
+						mat.Color = Color.Blue * 0.30f;
+						break;
+					case CassetteBlock.CassetteBlockType.Red:
+						mat.Color = Color.Red * 0.30f;
+						break;
+					case CassetteBlock.CassetteBlockType.Green:
+						mat.Color = Color.Green * 0.30f;
+						break;
+					case CassetteBlock.CassetteBlockType.Yellow:
+						mat.Color = Color.Yellow * 0.30f;
+						break;
+				}
+		}
+		else
+		{
+			FrameModel.Flags = ModelFlags.Terrain;
+
+			foreach (var mat in FrameModel.Materials)
+				switch (BlockType)
+				{
+					case CassetteBlock.CassetteBlockType.Blue:
+						mat.Color = Color.Blue;
+						break;
+					case CassetteBlock.CassetteBlockType.Red:
+						mat.Color = Color.Red;
+						break;
+					case CassetteBlock.CassetteBlockType.Green:
+						mat.Color = Color.Green;
+						break;
+					case CassetteBlock.CassetteBlockType.Yellow:
+						mat.Color = Color.Yellow;
+						break;
+				}
+		}
+
 		//if (TShake > 0)
 		//{
-		//	TShake -= Time.Delta;
 		//	if (TShake <= 0)
 		//	{
 		//		FrameModel.Transform = Matrix.Identity * Matrix.CreateScale(LocalBounds.Size.X / 1.9f, LocalBounds.Size.Y / 1.9f, LocalBounds.Size.Z / 1.9f);
@@ -49,9 +92,7 @@ public class TrafficBlock(Vec3 end) : Solid, IHaveModels
 		//			Matrix.CreateTranslation(World.Rng.Float(-1, 1), World.Rng.Float(-1, 1), 0);
 		//		FrameModel.Transform = matrix;
 		//	}
-
 		//}
-
 		float scaleoffset = 1f;
 		FrameModel.Transform = Model.Transform + Matrix.CreateScale(LocalBounds.Size.X / scaleoffset, LocalBounds.Size.Y / scaleoffset, LocalBounds.Size.Z / scaleoffset);
 	}
@@ -60,11 +101,9 @@ public class TrafficBlock(Vec3 end) : Solid, IHaveModels
 	{
 		while (true)
 		{
-			while (!HasPlayerRider() || !triggered)
-				//Console.WriteLine("not triggered");
+			while (!HasPlayerRider())
 				yield return Co.SingleFrame;
 
-			Console.WriteLine("Starting Traffic block move!");
 			Audio.Play(Sfx.sfx_zipmover_start, Position);
 			TShake = .15f;
 			UpdateOffScreen = true;
@@ -102,7 +141,6 @@ public class TrafficBlock(Vec3 end) : Solid, IHaveModels
 					yield return Co.SingleFrame;
 				}
 
-				triggered = false;
 				sfxRetract?.Stop();
 				Velocity = Vec3.Zero;
 				MoveTo(target);
@@ -116,12 +154,6 @@ public class TrafficBlock(Vec3 end) : Solid, IHaveModels
 				yield return .5f;
 			}
 		}
-	}
-
-	public virtual void Trigger()
-	{
-		triggered = true;
-		Console.WriteLine("Triggered" + triggered);
 	}
 
 	public virtual void CollectModels(List<(Actor Actor, Model Model)> populate)

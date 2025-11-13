@@ -135,20 +135,49 @@ public static class Audio
 		}
 	}
 
+	public static Guid ToGuid(FMOD.GUID value)
+	{
+		Type FMODStruct = typeof(FMOD.GUID);
+		FieldInfo[] fields = FMODStruct.GetFields();
+
+		int[] ints = new int[4];
+		for (int i = 0; i < 4; i++)
+		{
+			ints[i] = (int)fields[i].GetValue(value);
+		}
+
+		byte[] bytes = new byte[16];
+		for (int i = 0; i < 4; i++)
+		{
+			Array.Copy(BitConverter.GetBytes(ints[i]), 0, bytes, i * 4, 4);
+		}
+		return new Guid(bytes);
+	}
+
 	public static void LoadBank(string path)
 	{
 		Check(system.loadBankFile(path, LOAD_BANK_FLAGS.NORMAL, out var bank));
+		//system.getBus("bus:/", out var masterBus);
+		//masterBus.getID(out var masterBusID);
+		//Debug.WriteLine(ToGuid(masterBusID));
 
 		banks.Add(bank);
 		bank.getEventList(out var evs);
 		bank.getBusList(out var bs);
-
 		foreach (var ev in evs)
 			if (ev.isValid())
 			{
 				ev.getPath(out var eventPath);
 				ev.getID(out var eventID);
+				Debug.WriteLine(ToGuid(eventID));
 				events[eventPath] = eventID;
+				//if (eventPath != null)
+				//{
+				//	events[eventPath] = eventID;
+				//} else
+				//{
+				//	events["event:/sfx/fakeheart_sfx"] = eventID;
+				//}
 			}
 
 		foreach (var bus in bs)
@@ -156,6 +185,8 @@ public static class Audio
 			{
 				bus.getPath(out var busPath);
 				bus.getID(out var busID);
+				//Debug.WriteLine(ToGuid(busID));
+
 				buses[busPath] = busID;
 			}
 	}
@@ -181,6 +212,8 @@ public static class Audio
 		if (id.Data1 != 0 || id.Data2 != 0 || id.Data3 != 0 || id.Data4 != 0)
 		{
 			var result = system.getEventByID(id, out var desc);
+			//desc.getPath(out var eventPath);
+			//Debug.WriteLine(eventPath);
 			if (result != FMOD.RESULT.OK)
 			{
 				Log.Warning($"Failed to create Audio Event Instance: {result}");
@@ -195,10 +228,15 @@ public static class Audio
 
 	public static AudioHandle Create(string path)
 	{
+		//events.TryGetValue(path, out var eventid);
+		//var result = system.getEventByID(eventid, out var desc);
+		//desc.getPath(out var eventPath);
+		//Debug.WriteLine(eventPath);
 		if (!string.IsNullOrEmpty(path) && events.TryGetValue(path, out var id))
 			return Create(id);
 		else
 			Log.Warning($"Audio Event {path} doesn't exist");
+			Debug.WriteLine($"Audio Event {path} doesn't exist");
 		return new();
 	}
 
@@ -208,6 +246,7 @@ public static class Audio
 		if (result != FMOD.RESULT.OK)
 		{
 			Log.Warning($"Failed to create Audio Event Instance: {result}");
+			Debug.WriteLine($"Failed to create Audio Event Instance: {result}");
 			return new AudioHandle();
 		}
 		

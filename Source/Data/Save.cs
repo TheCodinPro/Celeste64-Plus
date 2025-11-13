@@ -16,6 +16,14 @@ public class Save
 		Both
 	}
 
+	public enum AirDashOptions : int
+	{
+		None = 1,
+		One = 2,
+		Two = 3,
+		Three = 4
+	}
+
 	/// <summary>
 	/// Stored data associated with a single level
 	/// </summary>
@@ -86,6 +94,14 @@ public class Save
 	/// </summary>
 	public string Language { get; set; } = "english";
 
+	public int GameSpeed { get; set; } = 10;
+
+	public int AirDashes { get; set; } = 1;
+
+	public bool DashAssist { get; set; } = true;
+
+	public bool Invincibility { get; set; } = true;
+
 	/// <summary>
 	/// Records for each level
 	/// </summary>
@@ -136,6 +152,23 @@ public class Save
 		SyncSettings();
 	}
 
+	public void ToggleDashAssist()
+	{
+		DashAssist = !DashAssist;
+		SyncSettings();
+	}
+
+	public void ToggleInvincibility()
+	{
+		Invincibility = !Invincibility;
+		SyncSettings();
+	}
+
+	public void SetAirDashes(AirDashOptions value)
+	{
+		AirDashes = (int)value;
+	}
+
 	public void ToggleZGuide()
 	{
 		ZGuide = !ZGuide;
@@ -149,6 +182,12 @@ public class Save
 	public void ToggleTimer()
 	{
 		SpeedrunTimer = !SpeedrunTimer;
+	}
+
+	public void SetGameSpeed(int value)
+	{
+		GameSpeed = Calc.Clamp(value, 0, 10);
+		SyncSettings();
 	}
 
 	public void SetMusicVolume(int value)
